@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import { supabase } from '../supabaseClient'; // REMOVE global client import
 import { useUser, useSession } from '@clerk/clerk-react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js'; // Keep createClient
+import { createClient } from '@supabase/supabase-js'; // Remove SupabaseClient type if unused
 import '../style.css'; // Assuming general styles might apply
 
 interface GalleryImage {

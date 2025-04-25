@@ -1,6 +1,6 @@
-import React, { useState, ChangeEvent, FormEvent, useEffect, useMemo } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 // import { supabase } from '../supabaseClient'; // REMOVE global client import
-import { useAuth, useSession } from '@clerk/clerk-react'; // Import useSession
+import { useSession } from '@clerk/clerk-react'; // Remove unused useAuth, keep useSession
 import { createClient } from '@supabase/supabase-js'; // Import createClient
 import '../style.css';
 
@@ -47,7 +47,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
     const [status, setStatus] = useState<GenerationStatus>('idle');
     const [error, setError] = useState<string | null>(null);
     const [resultImage, setResultImage] = useState<string | null>(null); // Will hold the FINAL edited image URL
-    const [baseImageUrl, setBaseImageUrl] = useState<string | null>(null); // Temporary URL of base image
     const [faceReferenceImage, setFaceReferenceImage] = useState<File | null>(null);
     const [bodyReferenceImage, setBodyReferenceImage] = useState<File | null>(null);
     const [promptTemplate, setPromptTemplate] = useState<string>("Loading template...");
@@ -180,7 +179,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
         
         setError(null);
         setResultImage(null); 
-        setBaseImageUrl(null); 
         setStatus('generatingBase');
 
         // --- Basic Validation ---
@@ -229,7 +227,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
             }
 
             console.log("Step 1 Success: Base image URL:", generateResult.imageUrl);
-            setBaseImageUrl(generateResult.imageUrl);
 
             // === Step 2: Check if edits are needed and Call edit-image Function ===
             if (faceReferenceImage || bodyReferenceImage) { 

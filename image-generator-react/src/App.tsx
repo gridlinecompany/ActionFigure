@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, useUser } from '@clerk/clerk-react';
+import Header from './components/Header';
 import './style.css'; // Use our style.css
 // Import components without extension
 import ActionFigureGenerator from './components/ActionFigureGenerator'; // <-- Uncomment this import
@@ -10,13 +13,7 @@ import AdminSettings from './components/AdminSettings';
 // Import the new UserGallery component
 import UserGallery from './components/UserGallery';
 // Import Clerk components and hooks
-import { SignedIn, SignedOut, useUser, useSession } from "@clerk/clerk-react";
 import { createClient } from '@supabase/supabase-js'; // Add createClient import
-// Import the new Header component
-import Header from './components/Header';
-// Import routing components and Navigate
-import { Routes, Route, Navigate } from 'react-router-dom';
-// import { supabase } from './supabaseClient'; // REMOVE global client import
 // Import the new generator component
 import BarbieStyleBoxGenerator from './components/BarbieStyleBoxGenerator';
 
@@ -37,9 +34,8 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 
 // --- Main Application Component --- 
 function App() {
-  const { user, isLoaded } = useUser(); // Keep user/isLoaded here for Header prop
-  // const { getToken } = useAuth(); // REMOVE if not used elsewhere
-  const { session } = useSession(); // Keep session if needed, even if not for logo fetch
+  const { user, isLoaded } = useUser();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
   const [logoUrl, setLogoUrl] = useState<string | null>(null); // State for logo URL
 
   // --- Fetch Logo URL on Mount --- 
@@ -96,7 +92,7 @@ function App() {
 
   return (
     <div className="app-layout"> 
-      <Header isAdmin={user?.publicMetadata?.role === 'admin'} logoUrl={logoUrl} />
+      <Header isAdmin={isAdmin} logoUrl={logoUrl} />
       <div className="main-content">
         <Routes>
           {/* Root Path Logic */}
