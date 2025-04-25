@@ -1,0 +1,640 @@
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #121212; /* Dark background */
+    color: #e0e0e0; /* Light grey text */
+    margin: 0;
+    /* Remove flexbox centering from body */
+    /* display: flex; */
+    /* justify-content: center; */
+    /* align-items: flex-start; */
+    min-height: 100vh;
+    /* Ensure fonts load */
+    font-display: swap;
+}
+
+/* Remove padding: 20px; from body if app-layout/main-content handles it */
+/* body { padding: 20px; } */
+
+.container {
+    background-color: #1e1e1e; /* Slightly lighter dark shade for card */
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    max-width: 900px; /* Increased from 700px */
+    width: 100%;
+}
+
+h1 {
+    color: #bb86fc; /* Material Purple */
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+/* Prompt Template */
+.prompt-template {
+    background-color: #2c2c2c; /* Even lighter dark shade */
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 25px;
+    font-style: italic;
+    color: #bdbdbd;
+    line-height: 1.6;
+    border-left: 4px solid #03dac6; /* Material Teal */
+}
+
+.prompt-template .placeholder {
+    color: #f8bbd0; /* Light Pink for contrast */
+    font-weight: 500;
+    font-style: normal;
+    /* Add small padding for visual separation */
+    padding: 0 2px;
+}
+
+/* Rename layout styles for generator components */
+.generator-layout { /* Renamed from .main-content */
+    display: flex;
+    gap: 30px; /* Space between form and results */
+    /* margin-top: 30px; */ /* Removed */
+    align-items: flex-start; /* Align items to the top */
+}
+
+.generator-layout form { /* Updated selector */
+    flex: 1 1 55%; /* Allow form to grow/shrink, base width 55% */
+    max-width: 55%; /* Prevent form from getting too wide */
+    /* margin-top: 0; */ /* Removed */
+}
+
+.generator-layout .result-container { /* Updated selector */
+    flex: 1 1 45%; /* Allow result to grow/shrink, base width 45% */
+    max-width: 45%;
+    /* margin-top: 0; */ /* Removed */
+    border-top: none; /* Remove top border as it's now side-by-side */
+    padding-top: 0;
+    /* Add some padding to align visually with form inputs */
+    padding-left: 20px;
+    border-left: 1px solid #444; /* Add a separator line */
+    min-height: 400px; /* Give it some initial height */
+}
+
+/* Input Fields */
+/* Remove form margin-top as it's handled by main-content */
+/* form {
+    margin-top: 20px; 
+} */
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #cfcfcf;
+    font-weight: 500;
+}
+
+/* Group input, select, and textarea for common styling */
+.input-group input[type="text"],
+.input-group select,
+.input-group textarea {
+    width: 100%; /* Use 100% and box-sizing */
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    font-size: 1rem;
+    line-height: 1.5;
+    box-sizing: border-box; /* Include padding and border in width */
+    margin-top: 5px; /* Add consistent top margin like original body had? */
+}
+
+/* Specific adjustment for text inputs if needed (like original calc width) */
+/* 
+.input-group input[type="text"] {
+    width: calc(100% - 22px); 
+}
+*/
+
+/* Group focus styles */
+.input-group input[type="text"]:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+    outline: none;
+    border-color: #bb86fc; /* Material Purple */
+    box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.3);
+}
+
+/* Keep select styling separate if it needs unique properties like appearance */
+.input-group select {
+    /* Appearance for dropdown arrow */
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 0 24 24' width='24' fill='%23e0e0e0'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1.2em;
+    padding-right: 30px; /* Space for the arrow */
+}
+
+/* Remove the now redundant :focus rules for text and select */
+/*
+.input-group input[type="text"]:focus {
+    outline: none;
+    border-color: #bb86fc; 
+    box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.3);
+}
+.input-group select:focus {
+    outline: none;
+    border-color: #bb86fc; 
+    box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.3);
+}
+*/
+
+/* Added styles for file input */
+.input-group input[type="file"] {
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #bdbdbd;
+    padding: 8px 10px;
+    width: calc(100% - 22px);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.input-group input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    border: none;
+    background: #444;
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.input-group input[type="file"]::file-selector-button:hover {
+    background: #555;
+}
+
+/* Added styles for checkbox group */
+.checkbox-group {
+    display: flex;
+    align-items: center; /* Vertically align checkbox and label */
+    margin-bottom: 20px; /* Consistent spacing */
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px; /* Space between checkbox and label */
+    width: auto; /* Override width from other inputs */
+    cursor: pointer;
+    /* Optional: Style checkbox appearance */
+    accent-color: #bb86fc; /* Match theme */
+}
+
+.checkbox-group label {
+    margin-bottom: 0; /* Remove default bottom margin for label */
+    cursor: pointer;
+    font-weight: normal; /* Make label less prominent than input labels */
+    color: #bdbdbd;
+}
+
+/* Button */
+button#generate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #03dac6; /* Material Teal */
+    color: #121212;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+
+/* Style for Material Icons within the button */
+button#generate-btn .material-icons {
+    margin-right: 8px;
+    font-size: 1.2em; /* Slightly larger icon */
+    line-height: 1; /* Align icon vertically */
+}
+
+button#generate-btn:hover {
+    background-color: #018786;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+button#generate-btn:active {
+    background-color: #005f57;
+}
+
+button#generate-btn:disabled {
+    background-color: #444;
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Result Area */
+/* Remove margin-top, border-top, padding-top as handled by main-content */
+/* .result-container {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+    min-height: 100px; 
+    text-align: center; 
+} */
+
+.result-container h2 {
+    color: #bb86fc; /* Material Purple */
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#result-image {
+    display: block;
+    max-width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    margin: 0 auto;
+    border-radius: 4px;
+    background-color: #2c2c2c; /* Placeholder background */
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-block; /* Center inline */
+    border: 4px solid #444; /* Darker border for contrast */
+    border-top: 4px solid #03dac6; /* Teal */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.error-message {
+    color: #cf6679; /* Material Error Color */
+    text-align: center;
+    margin-top: 15px;
+    font-weight: 500;
+    padding: 10px;
+    background-color: rgba(207, 102, 121, 0.1); /* Slight background for error */
+    border-radius: 4px;
+}
+
+/* Material Icons class (ensure it's available) */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+/* --- Remove Tab Styles --- */
+/*
+.tabs {
+    display: flex;
+    margin-bottom: 20px; 
+    border-bottom: 1px solid #444; 
+}
+
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: #bdbdbd; 
+    font-size: 1rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent; 
+    margin-bottom: -1px; 
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.tab-button:hover {
+    color: #e0e0e0;
+}
+
+.tab-button.active {
+    color: #bb86fc; 
+    border-bottom-color: #bb86fc;
+}
+
+.tab-content {
+    margin-top: 20px;
+}
+*/
+/* --- End Remove Tab Styles --- */
+
+/* Clerk Button Styles (Added) */
+.clerk-button {
+  background-color: #bb86fc; /* Material Purple */
+  color: #121212;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.clerk-button:hover {
+  background-color: #a36dfa;
+}
+
+.clerk-button-secondary {
+  background-color: #444;
+  color: #e0e0e0;
+}
+
+.clerk-button-secondary:hover {
+  background-color: #555;
+}
+
+/* Add styles for the image placeholder */
+.image-placeholder {
+  width: 100%; /* Take full width of container */
+  height: 300px; /* Set a fixed height, adjust as needed */
+  background-color: #2c2c2c; /* Darker background to match theme */
+  border: 1px dashed #555; /* Adjusted border for dark background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #888; /* Adjusted text color for dark background */
+  margin-top: 20px; /* Add some space above */
+}
+
+/* Gallery Styles */
+.gallery-container {
+  padding: 20px;
+}
+
+.gallery-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #bb86fc; /* Match theme */
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+  gap: 15px;
+}
+
+.image-item {
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden; /* Ensure image fits within bounds */
+  background-color: #2c2c2c;
+}
+
+.image-item img {
+  display: block;
+  width: 100%;
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Cover the area */
+}
+
+/* --- App Layout for Vertical Sidebar --- */
+.app-layout {
+  display: flex;
+  min-height: 100vh; /* Ensure layout takes full viewport height */
+}
+
+.app-sidebar {
+  width: 280px; /* Increased width */
+  background-color: #1e1e1e; /* Dark background for sidebar */
+  padding: 20px;
+  display: flex;
+  flex-direction: column; /* Stack sections vertically */
+  height: 100vh; /* Make sidebar full height */
+  position: sticky; /* Keep sidebar visible when scrolling main content */
+  top: 0;
+  color: #e0e0e0; /* Light text color for sidebar */
+  border-right: 1px solid #333; /* Optional border */
+}
+
+.app-sidebar h1 {
+  font-size: 1.5em; /* Adjust title size */
+  margin-bottom: 30px; /* Space below title */
+  text-align: center;
+}
+
+/* --- Logo Styles --- */
+.sidebar-logo-container {
+  text-align: center; /* Center the logo */
+  margin-bottom: 20px; /* Space below logo */
+}
+
+.sidebar-logo {
+  max-width: 80%; /* Prevent logo from exceeding sidebar width */
+  height: auto; /* Maintain aspect ratio */
+  max-height: 80px; /* Optional: Limit logo height */
+}
+/* --- End Logo Styles --- */
+
+.sidebar-section {
+  margin-bottom: 20px;
+}
+
+/* Add class for title section if needed for spacing */
+.sidebar-title {
+  /* Adjust spacing if logo is present, e.g., smaller margin-bottom */
+  /* margin-bottom: 15px; */ 
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column; /* Stack links vertically */
+  gap: 15px; /* Space between links */
+  flex-grow: 1; /* Allow nav to push user button down */
+}
+
+.sidebar-link {
+  color: #bb86fc; /* Accent color for links */
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active { /* Add active class logic if needed */
+  background-color: #333; /* Background on hover/active */
+  color: #ffffff;
+}
+
+.sidebar-user-button {
+  margin-top: auto; /* Pushes the user button to the bottom */
+  padding-top: 20px; 
+  border-top: 1px solid #333; /* Separator line */
+  display: flex;
+  justify-content: center; /* Center the UserButton */
+}
+
+.generator-layout {
+  flex-grow: 1; /* Allow main content to take remaining space */
+  padding: 30px; /* Add padding around the main content area */
+  overflow-y: auto; /* Allow scrolling if content exceeds viewport */
+}
+
+/* Adjustments for existing components */
+.container {
+  /* Remove max-width and margin auto if handled by main-content */
+  /* max-width: 1200px; */
+  /* margin: 0 auto; */
+  padding: 0; /* Remove padding if main-content handles it */
+}
+
+/* Ensure tabs take full width within main-content */
+.tabs {
+   margin-bottom: 20px; /* Keep space below tabs */
+   /* If tabs were centered, remove margin: 0 auto; */
+   /* Ensure they don't have a max-width restricting them */
+}
+
+/* Optional: Adjust tab content padding if needed */
+.tab-content {
+  /* padding: 20px; */ 
+}
+
+/* --- Admin Settings Layout --- */
+.admin-settings-container {
+  /* Add overall padding or margin if needed */
+  width: 100%; /* Make container take full width of parent */
+  /* Remove max-width and margin auto to allow full expansion */
+  /* max-width: 1000px; */ 
+  /* margin: 0 auto; */ 
+}
+
+.admin-section {
+  background-color: #2c2c2c; /* Slightly lighter dark shade for sections */
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid #3a3a3a;
+}
+
+.admin-section h3 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+  color: #bb86fc;
+}
+
+/* Logo Section Specific */
+.logo-settings .input-group {
+  margin-bottom: 15px; /* Space between preview/input */
+}
+
+.logo-preview-container {
+  margin-bottom: 20px;
+  text-align: center;
+  padding: 15px;
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.logo-preview-container p {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  color: #bdbdbd;
+}
+
+.current-logo-preview {
+  max-height: 80px;
+  max-width: 95%;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #fff; /* Add white background for transparency visibility */
+  /* --- Remove forced visibility --- */
+  /* height: 80px; */
+  /* width: auto; */
+  /* min-width: 50px; */
+  /* display: inline-block !important; */ 
+  /* ------------------------------ */
+}
+
+/* Template Section Specific */
+.template-settings {
+  /* Add specific styles if needed */
+}
+
+.template-editor-item {
+  border: 1px solid #444;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 6px;
+  background-color: #333; /* Background for each item */
+}
+
+.template-editor-item .input-group {
+  margin-bottom: 15px; /* Space between label/textarea and button */
+}
+
+.template-editor-item textarea {
+  width: 100%; 
+  box-sizing: border-box;
+}
+
+/* Common Styles for Save Area */
+.save-button-container {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 36px; /* Ensure container has height even if status is empty */
+}
+
+.save-status-message {
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+/* Color is set based on status in the component, but can add base color */
+.save-status-message {
+   color: #03dac6; /* Default to success color */
+}
+.save-status-message:has(> span[style*="#cf6679"]) { /* Crude way, better with classes */
+   color: #cf6679; /* Error color */
+}
+
+.main-content {
+  flex-grow: 1; /* Allow main content to take remaining space */
+  width: 0; /* Add width: 0 to ensure flex-grow works correctly */
+  padding: 30px; /* Add padding around the main content area */
+  overflow-y: auto; /* Allow scrolling if content exceeds viewport */
+} 

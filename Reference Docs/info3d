@@ -1,0 +1,52 @@
+Customize Image Output
+You can configure the following output options:
+
+Size: Image dimensions (e.g., 1024x1024, 1024x1536)
+Quality: Rendering quality (e.g. low, medium, high)
+Format: File output format
+Compression: Compression level (0-100%) for JPEG and WebP formats
+Background: Transparent or opaque
+Size and quality options
+Square images with standard quality are the fastest to generate. The default size is 1024x1024 pixels.
+
+Available sizes	
+1024x1024 (square)
+1536x1024 (portrait)
+1024x1536 (landscape)
+auto (default)
+Quality options	
+low
+medium
+high
+auto (default)
+Output format
+The Image API returns base64-encoded image data. The default format is png, but you can also request jpeg or webp.
+
+If using jpeg or webp, you can also specify the output_compression parameter to control the compression level (0-100%). For example, output_compression=50 will compress the image by 50%.
+
+Transparency
+The gpt-image-1 model supports transparent backgrounds. To enable transparency, set the background parameter to transparent.
+
+It is only supported with the png and webp output formats.
+
+Transparency works best when setting the quality to medium or high.
+
+Generate an image with a transparent background
+from openai import OpenAI
+import base64
+client = OpenAI()
+
+result = client.images.generate(
+    model="gpt-image-1",
+    prompt="Draw a 2D pixel art style sprite sheet of a tabby gray cat",
+    size="1024x1024",
+    background="transparent",
+    quality="high",
+)
+
+image_base64 = result.json()["data"][0]["b64_json"]
+image_bytes = base64.b64decode(image_base64)
+
+# Save the image to a file
+with open("sprite.png", "wb") as f:
+    f.write(image_bytes)

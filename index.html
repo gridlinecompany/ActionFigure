@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Action Figure Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Action Figure Generator</h1>
+        <p class="prompt-template">
+            "Create a realistic action figure of a
+            <span class="placeholder">[profession/personality type]</span> named
+            <span class="placeholder">[Name]</span>. The figure is packaged in a clear plastic and cardboard box that says
+            '<span class="placeholder">[PROFESSION]</span>' at the top and
+            '<span class="placeholder">[NAME]</span>' at the bottom. The figure is standing in a neutral pose, smiling. Add accessories like
+            <span class="placeholder">[list 3–4 relevant items]</span>. The background should reflect their environment, such as
+            <span class="placeholder">[describe background]</span>. Outfit should match the character –
+            <span class="placeholder">[describe clothing]</span>. Make it look like a high-quality toy package with soft lighting and realistic design."
+        </p>
+
+        <div class="input-group">
+            <label for="profession">Profession/Personality Type:</label>
+            <input type="text" id="profession" placeholder="e.g., fearless astronaut, quirky scientist">
+        </div>
+        <div class="input-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" placeholder="e.g., Captain Stella, Dr. Quantum">
+        </div>
+        <div class="input-group">
+            <label for="accessories">Accessories (3-4 items):</label>
+            <input type="text" id="accessories" placeholder="e.g., laser pistol, alien artifact, data pad">
+        </div>
+        <div class="input-group">
+            <label for="background">Background:</label>
+            <input type="text" id="background" placeholder="e.g., spaceship bridge, cluttered laboratory">
+        </div>
+        <div class="input-group">
+            <label for="clothing">Clothing:</label>
+            <input type="text" id="clothing" placeholder="e.g., futuristic space suit, lab coat with stains">
+        </div>
+
+        <button id="generate-btn">
+            <span class="material-icons">auto_awesome</span> Generate Image
+        </button>
+
+        <div id="result-container" class="result-container" style="display: none;">
+            <h2>Generated Image:</h2>
+            <div id="loading-spinner" class="loading-spinner" style="display: none;"></div>
+            <img id="result-image" src="" alt="Generated action figure">
+            <p id="error-message" class="error-message" style="display: none;"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
