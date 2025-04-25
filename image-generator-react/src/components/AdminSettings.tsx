@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useAuth, useSession } from '@clerk/clerk-react'; // Import useAuth AND useSession
 import '../style.css'; // Import base styles if needed
 import { createClient } from '@supabase/supabase-js'; // Import createClient
