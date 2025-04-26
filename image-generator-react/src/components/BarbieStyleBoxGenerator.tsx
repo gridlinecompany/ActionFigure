@@ -50,15 +50,23 @@ const BarbieStyleBoxGenerator: React.FC = () => {
     const [faceReferenceImage, setFaceReferenceImage] = useState<File | null>(null);
     const [bodyReferenceImage, setBodyReferenceImage] = useState<File | null>(null);
     const [promptTemplate, setPromptTemplate] = useState<string>("Loading template...");
+    const [shouldShowPrompt, setShouldShowPrompt] = useState<boolean>(true);
+    const [loadingSetting, setLoadingSetting] = useState<boolean>(true);
 
-    // Fetch Prompt Template on Mount - This uses the global client, needs changing
+    // Fetch Prompt Template AND Global Setting on Mount
     useEffect(() => {
-        // Fetch template only when session is available
+        // Fetch data only when session is available
         if (!session) return;
 
-        const fetchTemplate = async () => {
+        // Reset states
+        setLoadingSetting(true);
+        // Keep promptTemplate loading state as is initially
+
+        const fetchData = async () => {
+            // Explicitly type the client variable
+            let tempSupabaseClient: import('@supabase/supabase-js').SupabaseClient | null = null;
             try {
-                // Create a temporary client JUST for this read, authenticated with Clerk
+                // Create a temporary client JUST for these reads, authenticated with Clerk
                 const supabaseAccessToken = await session.getToken({ template: 'supabase' });
                 if (!supabaseAccessToken) throw new Error('Clerk token not available');
 
@@ -66,33 +74,64 @@ const BarbieStyleBoxGenerator: React.FC = () => {
                 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
                 if (!supabaseUrl || !supabaseAnonKey) throw new Error('Supabase config missing');
 
-                const tempSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+                tempSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
                     global: { headers: { Authorization: `Bearer ${supabaseAccessToken}` } }
                 });
                 // ---------------------------------------------------------------------
 
-                console.log("Fetching prompt template...");
-                const { data, error: templateError } = await tempSupabaseClient
-                    .from('prompt_templates')
-                    .select('template_text')
-                    .eq('template_id', 'barbieStyleBox')
-                    .single();
-                
-                if (templateError) throw templateError;
+                // --- Fetch Template and Setting Concurrently ---
+                const [templateResult, settingResult] = await Promise.all([
+                    // Fetch Template
+                    tempSupabaseClient
+                        .from('prompt_templates')
+                        .select('template_text')
+                        .eq('template_id', 'barbieStyleBox') // Make sure this ID is correct
+                        .single(),
+                    // Fetch Setting
+                    tempSupabaseClient
+                        .from('global_settings')
+                        .select('show_prompts_globally')
+                        .eq('id', 1)
+                        .single()
+                ]);
+                // ---------------------------------------------
 
-                if (data && data.template_text) {
-                    setPromptTemplate(data.template_text);
+                // Process Template Result
+                const { data: templateData, error: templateError } = templateResult;
+                if (templateError) throw new Error(`Template fetch failed: ${templateError.message}`);
+                if (templateData && templateData.template_text) {
+                    setPromptTemplate(templateData.template_text);
                     console.log("Prompt template loaded.");
                 } else {
                     setPromptTemplate("Could not load template.");
                 }
+
+                // Process Setting Result
+                const { data: settingData, error: settingError } = settingResult;
+                if (settingError) {
+                     // Log error, but default to showing the prompt if setting fetch fails
+                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
+                     setShouldShowPrompt(true);
+                } else if (settingData) {
+                    setShouldShowPrompt(settingData.show_prompts_globally);
+                    console.log(`Prompt visibility setting loaded: ${settingData.show_prompts_globally}`);
+                } else {
+                    console.warn("Prompt visibility setting not found. Defaulting to show.");
+                    setShouldShowPrompt(true); // Default to show if row/value doesn't exist
+                }
+
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
-                console.error("Error fetching prompt template:", err);
-                setPromptTemplate(`Error loading template: ${message}`);
+                console.error("Error fetching template or setting:", err);
+                // Set specific errors or a general one
+                setPromptTemplate(`Error loading template/setting: ${message}`);
+                // Ensure boolean is set for setShouldShowPrompt
+                setShouldShowPrompt(true); // Default to showing prompts on error
+            } finally {
+                 setLoadingSetting(false); // Mark setting as loaded (or failed)
             }
         };
-        fetchTemplate();
+        fetchData();
     }, [session]); // Depend on session
 
     // --- Handle Input Changes (Text, Select, Files) ---
@@ -336,28 +375,36 @@ const BarbieStyleBoxGenerator: React.FC = () => {
     return (
         <>
             <h2>Barbie Style Box Generator (2-Step)</h2>
-            {/* --- Live Prompt Preview --- */}
-            <p className="prompt-template">
-                {/* ... (Keep the prompt preview logic as it was) ... */}
-                 {promptTemplate.split('[').map((part, index) => {
-                    if (index === 0) return part;
-                    const placeholderEndIndex = part.indexOf(']');
-                    if (placeholderEndIndex === -1) return part;
-                    const placeholderText = part.substring(0, placeholderEndIndex);
-                    const restOfText = part.substring(placeholderEndIndex + 1);
-                    const formValue = getFormDataValue(placeholderText);
-                    return (
-                        <React.Fragment key={index}>
-                            {formValue ? (
-                                <>{formValue}</>
-                            ) : (
-                                <span className="placeholder">[{placeholderText}]</span>
-                            )}
-                            {restOfText}
-                        </React.Fragment>
-                    );
-                })}
-            </p>
+            {/* --- Live Prompt Preview (Conditionally Rendered) --- */}
+            {!loadingSetting && shouldShowPrompt && (
+                <p className="prompt-template">
+                    {/* Keep the prompt preview logic as it was */}
+                    {promptTemplate === "Loading template..." || promptTemplate.startsWith("Error loading") ? (
+                        <span className="placeholder">{promptTemplate}</span> // Show loading/error state
+                    ) : (
+                        promptTemplate.split('[').map((part, index) => {
+                            if (index === 0) return part;
+                            const placeholderEndIndex = part.indexOf(']');
+                            if (placeholderEndIndex === -1) return part;
+                            const placeholderText = part.substring(0, placeholderEndIndex);
+                            const restOfText = part.substring(placeholderEndIndex + 1);
+                            const formValue = getFormDataValue(placeholderText);
+                            return (
+                                <React.Fragment key={index}>
+                                    {formValue ? (
+                                        <>{formValue}</>
+                                    ) : (
+                                        <span className="placeholder">[{placeholderText}]</span>
+                                    )}
+                                    {restOfText}
+                                </React.Fragment>
+                            );
+                        })
+                    )}
+                </p>
+            )}
+            {loadingSetting && <p>Loading settings...</p>} {/* Optional: Show loading indicator */}
+            {/* ---------------------------------------------------- */}
 
             <div className="generator-layout">
                 <form onSubmit={handleSubmit}>

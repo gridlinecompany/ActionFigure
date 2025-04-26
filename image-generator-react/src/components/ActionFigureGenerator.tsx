@@ -52,15 +52,23 @@ const ActionFigureGenerator: React.FC = () => {
     const [bodyPreviewUrl, setBodyPreviewUrl] = useState<string | null>(null); // RENAMED: State for body preview URL
     // Add state for the prompt template text
     const [promptTemplate, setPromptTemplate] = useState<string>("Loading template...");
+    const [shouldShowPrompt, setShouldShowPrompt] = useState<boolean>(true); // <<< State for prompt visibility
+    const [loadingSetting, setLoadingSetting] = useState<boolean>(true); // <<< Loading state for setting
 
-    // --- Fetch Prompt Template on Mount ---
+    // Fetch Prompt Template AND Global Setting on Mount
     useEffect(() => {
-        const fetchTemplate = async () => {
+        const fetchData = async () => {
             if (!session) {
-                console.log("ActionFigureGenerator: No session, cannot fetch template.");
-                setPromptTemplate("Login required to load template."); // Or handle appropriately
+                console.log("ActionFigureGenerator: No session, cannot fetch data.");
+                setPromptTemplate("Login required to load template.");
+                setLoadingSetting(false); // Mark setting as loaded (even though failed due to no session)
+                setShouldShowPrompt(true); // Default to true
                 return;
             }
+
+            setLoadingSetting(true); // Start loading setting
+            // Explicitly type the client variable
+            let tempSupabaseClient: import('@supabase/supabase-js').SupabaseClient | null = null;
 
             try {
                 const accessToken = await getToken({ template: 'supabase' });
@@ -75,32 +83,60 @@ const ActionFigureGenerator: React.FC = () => {
                 }
 
                 // Create AUTHENTICATED Supabase client
-                const authSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+                tempSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
                     global: { headers: { Authorization: `Bearer ${accessToken}` } },
                 });
 
-                // Fetch using the authenticated client
-                const { data, error } = await authSupabaseClient
-                    .from('prompt_templates')
-                    .select('template_text')
-                    .eq('template_id', 'actionFigure')
-                    .single();
+                // --- Fetch Template and Setting Concurrently ---
+                const [templateResult, settingResult] = await Promise.all([
+                    // Fetch Template
+                    tempSupabaseClient
+                        .from('prompt_templates')
+                        .select('template_text')
+                        .eq('template_id', 'actionFigure') // Ensure this ID matches
+                        .single(),
+                    // Fetch Setting
+                    tempSupabaseClient
+                        .from('global_settings')
+                        .select('show_prompts_globally')
+                        .eq('id', 1)
+                        .single()
+                ]);
+                // ---------------------------------------------
 
-                if (error) throw error;
-
-                if (data && data.template_text) {
-                    setPromptTemplate(data.template_text);
+                // Process Template Result
+                const { data: templateData, error: templateError } = templateResult;
+                if (templateError) throw new Error(`Template fetch failed: ${templateError.message}`);
+                if (templateData && templateData.template_text) {
+                    setPromptTemplate(templateData.template_text);
                 } else {
                     setPromptTemplate("Could not load template.");
                 }
+
+                // Process Setting Result
+                const { data: settingData, error: settingError } = settingResult;
+                if (settingError) {
+                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
+                     setShouldShowPrompt(true);
+                } else if (settingData) {
+                    setShouldShowPrompt(settingData.show_prompts_globally);
+                } else {
+                    console.warn("Prompt visibility setting not found. Defaulting to show.");
+                    setShouldShowPrompt(true);
+                }
+
             } catch (error) {
-                console.error("Error fetching action figure template:", error);
-                setError(error instanceof Error ? error.message : String(error)); // Set error state
+                console.error("Error fetching action figure template or setting:", error);
+                setError(error instanceof Error ? error.message : String(error));
                 setPromptTemplate("Error loading template.");
+                // Ensure boolean is set
+                setShouldShowPrompt(true); // Default to true on error
+            } finally {
+                setLoadingSetting(false); // Finish loading setting
             }
         };
 
-        fetchTemplate();
+        fetchData();
     }, [session, getToken]); // Depend on session and getToken
 
     // Handle text/select input changes
@@ -443,62 +479,20 @@ const ActionFigureGenerator: React.FC = () => {
     // JSX for the component
     return (
         <>
-            {/* Display the fetched prompt template */}
-            <p className="prompt-template">
-                {/* Render the template text, splitting to style placeholders */}
-                {promptTemplate.split(/(\[.*?\])/g).map((part, index) => { // Split by brackets, keeping them
-                    if (!part) return null; // Skip empty strings from split
-                    
-                    if (part.startsWith('[') && part.endsWith(']')) {
-                        const placeholderContent = part.substring(1, part.length - 1);
-                        let displayValue = part; // Default to showing the placeholder itself
-                        
-                        // Explicit mapping based on NEW placeholders (v2)
-                        switch (placeholderContent.toUpperCase()) {
-                            case 'PROFESSION':
-                                displayValue = formData.profession || part;
-                                break;
-                            case 'CHARACTER NAME':
-                                displayValue = formData.name || part;
-                                break;
-                            case 'KEY ACCESSORIES':
-                                displayValue = formData.accessories || part;
-                                break;
-                            case 'BACKGROUND SETTING':
-                                displayValue = formData.background || part;
-                                break;
-                            case 'CLOTHING/OUTFIT DESCRIPTION':
-                                displayValue = formData.clothing || part;
-                                break;
-                            case 'GENDER':
-                                displayValue = formData.gender || part;
-                                break;
-                            case 'BODY STYLE':
-                                displayValue = formData.bodyStyle || part;
-                                break;
-                            case 'SKIN COLOR':
-                                displayValue = formData.skinColor || part;
-                                break;
-                            case 'EYE COLOR':
-                                displayValue = formData.eyeColor || part;
-                                break;
-                            // Add other placeholders if needed
-                        }
-                        
-                        return (
-                            <span key={index} className="placeholder">
-                                {/* Display the value if not empty, otherwise the placeholder */}
-                                {displayValue === part ? part : displayValue} 
-                            </span>
-                        );
-                    } else {
-                        // Regular text part
-                        return <React.Fragment key={index}>{part}</React.Fragment>;
-                    }
-                })}
-            </p>
+            <h2>Action Figure Generator (2-Step)</h2>
+            {/* --- Live Prompt Preview (Conditionally Rendered) --- */}
+            {!loadingSetting && shouldShowPrompt && (
+                 <p className="prompt-template">
+                    {promptTemplate === "Loading template..." || promptTemplate.startsWith("Error") || promptTemplate.startsWith("Login") || promptTemplate.startsWith("Could not") ? (
+                        <span className="placeholder">{promptTemplate}</span>
+                    ) : (
+                        constructBasePrompt() // Display the constructed prompt
+                    )}
+                 </p>
+            )}
+            {loadingSetting && <p>Loading settings...</p>} {/* Optional: Show loading indicator */}
+            {/* ---------------------------------------------------- */}
 
-            {/* Add the wrapper div with the new layout class */}
             <div className="generator-layout"> 
                 <form onSubmit={handleSubmit}>
                     {/* Update input labels and placeholders */}

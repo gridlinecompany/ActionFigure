@@ -35,15 +35,22 @@ const PackagingMockupGenerator: React.FC = () => {
     const [resultImage, setResultImage] = useState<string | null>(null);
     const [referenceImages, setReferenceImages] = useState<File[]>([]);
     const [promptTemplate, setPromptTemplate] = useState<string>("Loading template...");
+    const [shouldShowPrompt, setShouldShowPrompt] = useState<boolean>(true);
+    const [loadingSetting, setLoadingSetting] = useState<boolean>(true);
 
-    // Fetch Prompt Template on Mount
+    // Fetch Prompt Template AND Global Setting on Mount
     useEffect(() => {
-        const fetchTemplate = async () => {
+        const fetchData = async () => {
             if (!session) {
-                console.log("PackagingMockupGenerator: No session, cannot fetch template.");
+                console.log("PackagingMockupGenerator: No session, cannot fetch data.");
                 setPromptTemplate("Login required to load template.");
+                setLoadingSetting(false);
+                setShouldShowPrompt(true);
                 return;
             }
+
+            setLoadingSetting(true);
+            let tempSupabaseClient: import('@supabase/supabase-js').SupabaseClient | null = null;
 
             try {
                 const accessToken = await getToken({ template: 'supabase' });
@@ -58,32 +65,59 @@ const PackagingMockupGenerator: React.FC = () => {
                 }
 
                 // Create AUTHENTICATED Supabase client
-                const authSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+                tempSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
                     global: { headers: { Authorization: `Bearer ${accessToken}` } },
                 });
 
-                // Fetch using the authenticated client
-                const { data, error } = await authSupabaseClient
-                    .from('prompt_templates')
-                    .select('template_text')
-                    .eq('template_id', 'packaging') // Fetch the specific template
-                    .single();
+                // --- Fetch Template and Setting Concurrently ---
+                const [templateResult, settingResult] = await Promise.all([
+                    // Fetch Template
+                    tempSupabaseClient
+                        .from('prompt_templates')
+                        .select('template_text')
+                        .eq('template_id', 'packaging') // Ensure this ID matches
+                        .single(),
+                    // Fetch Setting
+                    tempSupabaseClient
+                        .from('global_settings')
+                        .select('show_prompts_globally')
+                        .eq('id', 1)
+                        .single()
+                ]);
+                // ---------------------------------------------
 
-                if (error) throw error;
-
-                if (data && data.template_text) {
-                    setPromptTemplate(data.template_text);
+                // Process Template Result
+                const { data: templateData, error: templateError } = templateResult;
+                if (templateError) throw new Error(`Template fetch failed: ${templateError.message}`);
+                if (templateData && templateData.template_text) {
+                    setPromptTemplate(templateData.template_text);
                 } else {
                     setPromptTemplate("Could not load template.");
                 }
+
+                // Process Setting Result
+                const { data: settingData, error: settingError } = settingResult;
+                if (settingError) {
+                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
+                     setShouldShowPrompt(true);
+                } else if (settingData) {
+                    setShouldShowPrompt(settingData.show_prompts_globally);
+                } else {
+                    console.warn("Prompt visibility setting not found. Defaulting to show.");
+                    setShouldShowPrompt(true);
+                }
+
             } catch (error) {
-                console.error("Error fetching packaging template:", error);
-                setError(error instanceof Error ? error.message : String(error)); // Set error state
+                console.error("Error fetching packaging template or setting:", error);
+                setError(error instanceof Error ? error.message : String(error));
                 setPromptTemplate("Error loading template.");
+                setShouldShowPrompt(true);
+            } finally {
+                setLoadingSetting(false);
             }
         };
 
-        fetchTemplate();
+        fetchData();
     }, [session, getToken]); // Depend on session and getToken
 
     // Handle text/select/checkbox input changes
@@ -206,21 +240,19 @@ const PackagingMockupGenerator: React.FC = () => {
         <>
             <h2>Packaging Mockup Generator</h2>
             
-            {/* Display the fetched prompt template */}
-            <p className="prompt-template">
-                {/* Render the template text, splitting to style placeholders */}
-                {promptTemplate.split('[').map((part, index) => {
-                    if (index === 0) return part; // First part is before the first placeholder
-                    const placeholderContent = part.substring(0, part.indexOf(']'));
-                    const restOfText = part.substring(part.indexOf(']') + 1);
-                    return (
-                        <React.Fragment key={index}>
-                            <span className="placeholder">[{placeholderContent}]</span>
-                            {restOfText}
-                        </React.Fragment>
-                    );
-                })}
-            </p>
+            {/* --- Live Prompt Preview (Conditionally Rendered) --- */}
+            {!loadingSetting && shouldShowPrompt && (
+                 <p className="prompt-template">
+                    {promptTemplate === "Loading template..." || promptTemplate.startsWith("Error") || promptTemplate.startsWith("Login") || promptTemplate.startsWith("Could not") ? (
+                        <span className="placeholder">{promptTemplate}</span>
+                    ) : (
+                       // Simplified display for packaging template - just show it raw or adapt placeholder logic if needed
+                       promptTemplate 
+                    )}
+                 </p>
+            )}
+            {loadingSetting && <p>Loading settings...</p>} {/* Optional: Show loading indicator */}
+            {/* ---------------------------------------------------- */}
 
             {/* Apply the layout class here */}
             <div className="generator-layout"> 

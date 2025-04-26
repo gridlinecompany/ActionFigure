@@ -25,6 +25,13 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
     const [error, setError] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<{ [key: string]: string }>({}); // For templates
 
+    // --- State for Prompt Visibility ---
+    const [showPromptsGlobally, setShowPromptsGlobally] = useState<boolean>(true);
+    const [loadingPromptSetting, setLoadingPromptSetting] = useState<boolean>(true);
+    const [promptSettingError, setPromptSettingError] = useState<string | null>(null);
+    const [promptSettingSaveStatus, setPromptSettingSaveStatus] = useState<string>('');
+    // ----------------------------------
+
     // --- State for Logo --- 
     const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null); // Display current logo
     const [logoFile, setLogoFile] = useState<File | null>(null); // Store selected file
@@ -46,8 +53,10 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
 
             setLoadingTemplates(true);
             setLoadingLogo(true);
+            setLoadingPromptSetting(true); // <<< Start loading prompt setting
             setError(null);
             setLogoError(null);
+            setPromptSettingError(null); // <<< Clear prompt setting error
 
             try {
                 // --- Create temporary authenticated client ---
@@ -65,58 +74,78 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 });
                 // --------------------------------------------
 
-                // Fetch Templates using the authenticated client
-                console.log("Fetching templates with authenticated client...");
-                const { data: templateData, error: templateError } = await authSupabaseClient
-                    .from('prompt_templates')
-                    .select('template_id, template_text');
-                
+                // --- Fetch All Data Concurrently (Optional but efficient) ---
+                const [templateResult, logoResult, promptSettingResult] = await Promise.all([
+                    // Fetch Templates
+                    authSupabaseClient.from('prompt_templates').select('template_id, template_text'),
+                    // Fetch Logo URL
+                    authSupabaseClient.from('settings').select('value').eq('setting_key', 'logo_url').maybeSingle(),
+                    // Fetch Prompt Visibility Setting
+                    authSupabaseClient.from('global_settings').select('show_prompts_globally').eq('id', 1).single() // Expect exactly one row
+                ]);
+                // ------------------------------------------------------------
+
+                // Process Template Result
+                const { data: templateData, error: templateError } = templateResult;
                 console.log("Template fetch result - Error:", templateError);
                 console.log("Template fetch result - Data:", templateData);
-
                 if (templateError) {
                     console.error("Template fetch error:", templateError);
-                    // Check if RLS error is specific
-                     if (templateError.message.includes('policy')) {
-                         throw new Error(`RLS Error fetching templates: ${templateError.message}. Check JWT role and policy.`);
-                     } else {
-                         throw templateError;
-                     }
-                }
-                if (templateData) {
+                    if (templateError.message.includes('policy')) {
+                        setError(`RLS Error fetching templates: ${templateError.message}. Check JWT role and policy.`);
+                    } else {
+                        setError(`Error loading templates: ${templateError.message}`);
+                    }
+                } else if (templateData) {
                     setTemplates(templateData);
                 } else {
-                     setError("Could not load templates (empty data)."); // Set general error if no template data
+                    setError("Could not load templates (empty data).");
                 }
 
-                // Fetch Current Logo URL from settings table using the authenticated client
-                console.log("Fetching logo setting with authenticated client...");
-                const { data: logoData, error: logoFetchError } = await authSupabaseClient
-                  .from('settings') 
-                  .select('value') 
-                  .eq('setting_key', 'logo_url')
-                  .maybeSingle(); 
-                
+                // Process Logo Result
+                const { data: logoData, error: logoFetchError } = logoResult;
                 console.log("Logo setting fetch result - Error:", logoFetchError);
                 console.log("Logo setting fetch result - Data:", logoData);
-
                 if (logoFetchError) {
                     console.error('Error fetching logo URL setting:', logoFetchError.message);
                     setLogoError("Could not fetch current logo setting.");
-                    // RLS check: If it's an RLS error, it likely means the admin doesn't have SELECT permission on settings? 
-                    // Our policy grants it via the FOR ALL + USING clause, but let's keep this in mind.
+                } else if (logoData && logoData.value) {
+                    setCurrentLogoUrl(logoData.value);
                 }
-                if (logoData && logoData.value) {
-                    setCurrentLogoUrl(logoData.value); // Set state for display
+
+                // Process Prompt Visibility Result <<<
+                const { data: promptSettingData, error: promptSettingFetchError } = promptSettingResult;
+                console.log("Prompt setting fetch result - Error:", promptSettingFetchError);
+                console.log("Prompt setting fetch result - Data:", promptSettingData);
+                if (promptSettingFetchError) {
+                    console.error('Error fetching prompt visibility setting:', promptSettingFetchError.message);
+                    // If the table/row doesn't exist yet, it might error. Handle this gracefully.
+                    if (promptSettingFetchError.message.includes('Results contain 0 rows')) {
+                        setPromptSettingError("Prompt setting not found in DB. Using default (Show). You might need to run the initial INSERT SQL.");
+                        setShowPromptsGlobally(true); // Default to true if not found
+                    } else {
+                        setPromptSettingError(`Could not fetch prompt setting: ${promptSettingFetchError.message}`);
+                    }
+                } else if (promptSettingData) {
+                    setShowPromptsGlobally(promptSettingData.show_prompts_globally);
+                } else {
+                     setPromptSettingError("Could not load prompt setting (empty data).");
+                     setShowPromptsGlobally(true); // Default to true if no data
                 }
+                // ----------------------------------------
 
             } catch (err) {
                 console.error("Error fetching admin data:", err);
                 const message = err instanceof Error ? err.message : "An unknown error occurred";
+                // Set a general error or specific ones depending on what failed
                 setError(`Error loading admin data: ${message}`);
+                // Ensure specific errors are also set if available
+                if (!logoError) setLogoError("Failed due to general error.");
+                if (!promptSettingError) setPromptSettingError("Failed due to general error.");
             } finally {
                 setLoadingTemplates(false);
                 setLoadingLogo(false);
+                setLoadingPromptSetting(false); // <<< Finish loading prompt setting
             }
         };
 
@@ -342,8 +371,56 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
     };
     // ------------------------------------------
 
+    // --- Handle Toggling Prompt Visibility Setting --- <<<
+    const handleTogglePrompts = async (event: ChangeEvent<HTMLInputElement>) => {
+        const isChecked = event.target.checked;
+        setShowPromptsGlobally(isChecked); // Optimistic update
+        setPromptSettingSaveStatus('Saving...');
+        setPromptSettingError(null);
+
+        try {
+            const accessToken = await getToken({ template: 'supabase' });
+            if (!accessToken) {
+                throw new Error('Could not get Supabase token from Clerk for saving setting.');
+            }
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+            if (!supabaseUrl || !supabaseAnonKey) {
+                throw new Error("Supabase URL/Anon key missing in .env for authenticated client.");
+            }
+            const authSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+                global: { headers: { Authorization: `Bearer ${accessToken}` } }
+            });
+
+            const { error: updateError } = await authSupabaseClient
+                .from('global_settings')
+                .update({ show_prompts_globally: isChecked, updated_at: new Date().toISOString() })
+                .eq('id', 1);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            setPromptSettingSaveStatus('Saved!');
+            setTimeout(() => setPromptSettingSaveStatus(''), 3000);
+
+        } catch (err) {
+            console.error(`Error updating prompt visibility setting:`, err);
+            // Revert optimistic update on error
+            setShowPromptsGlobally(!isChecked);
+            const message = err instanceof Error ? err.message : String(err);
+            if (message.includes('policy') || message.includes('permission')) {
+                 setPromptSettingError("Failed to save setting: Check admin permissions/RLS on global_settings table.");
+            } else {
+                 setPromptSettingError(`Failed to save setting: ${message}`);
+            }
+            setPromptSettingSaveStatus('Error!');
+        }
+    };
+    // ---------------------------------------------------
+
     // Combine loading states for initial display
-    if (loadingTemplates || loadingLogo) return <p>Loading admin settings...</p>;
+    if (loadingTemplates || loadingLogo || loadingPromptSetting) return <p>Loading admin settings...</p>; // Add prompt setting loading
     // Display global error first if it exists
     if (error) return <p className="error-message">{error}</p>;
 
@@ -396,6 +473,30 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 </div>
             </div> 
             {/* ------------------------- */}
+
+            {/* --- General Settings Section --- */}
+            <div className="admin-section general-settings">
+                <h3>General Settings</h3>
+                {promptSettingError && <p className="error-message">{promptSettingError}</p>}
+                <div className="input-group checkbox-group">
+                    <label htmlFor="show-prompts-toggle">
+                        Show Prompt Previews on Generator Pages:
+                    </label>
+                    <input
+                        type="checkbox"
+                        id="show-prompts-toggle"
+                        checked={showPromptsGlobally}
+                        onChange={handleTogglePrompts}
+                        disabled={promptSettingSaveStatus === 'Saving...'}
+                    />
+                     {promptSettingSaveStatus && (
+                        <span className="save-status-message" style={{ marginLeft: '10px' }}>
+                            {promptSettingSaveStatus}
+                        </span>
+                    )}
+                </div>
+            </div>
+            {/* ---------------------------- */}
 
             {/* --- Template Section --- */} 
              <div className="admin-section template-settings">
