@@ -42,9 +42,9 @@ const PackagingMockupGenerator: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (!session) {
-                console.log("PackagingMockupGenerator: No session, cannot fetch data.");
+                // console.log("PackagingMockupGenerator: No session, cannot fetch data.");
                 setPromptTemplate("Login required to load template.");
-                setLoadingSetting(false);
+                setLoadingSetting(false); // Mark setting as loaded
                 setShouldShowPrompt(true);
                 return;
             }
@@ -98,17 +98,17 @@ const PackagingMockupGenerator: React.FC = () => {
                 // Process Setting Result
                 const { data: settingData, error: settingError } = settingResult;
                 if (settingError) {
-                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
+                     // console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
                      setShouldShowPrompt(true);
                 } else if (settingData) {
                     setShouldShowPrompt(settingData.show_prompts_globally);
                 } else {
-                    console.warn("Prompt visibility setting not found. Defaulting to show.");
+                    // console.warn("Prompt visibility setting not found. Defaulting to show.");
                     setShouldShowPrompt(true);
                 }
 
             } catch (error) {
-                console.error("Error fetching packaging template or setting:", error);
+                // console.error("Error fetching packaging template or setting:", error);
                 setError(error instanceof Error ? error.message : String(error));
                 setPromptTemplate("Error loading template.");
                 setShouldShowPrompt(true);
@@ -167,10 +167,10 @@ const PackagingMockupGenerator: React.FC = () => {
         setLoading(true);
         const finalPrompt = constructPrompt();
         const { size, quality, isTransparent } = formData;
-        console.log("Packaging Mockup Prompt:", finalPrompt);
-        console.log(`Size: ${size}, Quality: ${quality}, Transparent: ${isTransparent}`);
+        // console.log("Packaging Mockup Prompt:", finalPrompt);
+        // console.log(`Size: ${size}, Quality: ${quality}, Transparent: ${isTransparent}`);
         if (referenceImages.length > 0) {
-            console.log(`Reference Images: ${referenceImages.map(f => f.name).join(', ')}`);
+            // console.log(`Reference Images: ${referenceImages.map(f => f.name).join(', ')}`);
         }
 
         const dataToSend = new FormData();
@@ -212,9 +212,9 @@ const PackagingMockupGenerator: React.FC = () => {
                          const errorText = await response.text();
                          errorMsg = `${errorMsg} - Server response: ${errorText}`;
                     } catch (textError) {
-                         console.error("Failed to read error response as text:", textError);
+                         // console.error("Failed to read error response as text:", textError);
                     }
-                    console.error("Failed to parse error response as JSON:", parseError);
+                     // console.error("Failed to parse error response as JSON:", parseError);
                 }
                 throw new Error(errorMsg);
             }
@@ -228,7 +228,7 @@ const PackagingMockupGenerator: React.FC = () => {
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            console.error('Error generating packaging mockup:', err);
+            // console.error('Error generating packaging mockup:', err);
             setError(`Failed to generate mockup: ${errorMessage}`);
         } finally {
             setLoading(false);

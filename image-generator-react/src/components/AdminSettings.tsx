@@ -45,11 +45,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
     useEffect(() => {
         const fetchData = async () => {
             if (!session) { // Wait for session
-                console.log("AdminSettings: No session, waiting...");
+                // console.log("AdminSettings: No session, waiting...");
                 // Optionally set loading state here if needed
                 return;
             }
-            console.log("AdminSettings: Session found, fetching data...");
+            // console.log("AdminSettings: Session found, fetching data...");
 
             setLoadingTemplates(true);
             setLoadingLogo(true);
@@ -87,10 +87,10 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
 
                 // Process Template Result
                 const { data: templateData, error: templateError } = templateResult;
-                console.log("Template fetch result - Error:", templateError);
-                console.log("Template fetch result - Data:", templateData);
+                // console.log("Template fetch result - Error:", templateError);
+                // console.log("Template fetch result - Data:", templateData);
                 if (templateError) {
-                    console.error("Template fetch error:", templateError);
+                    // console.error("Template fetch error:", templateError);
                     if (templateError.message.includes('policy')) {
                         setError(`RLS Error fetching templates: ${templateError.message}. Check JWT role and policy.`);
                     } else {
@@ -104,10 +104,10 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
 
                 // Process Logo Result
                 const { data: logoData, error: logoFetchError } = logoResult;
-                console.log("Logo setting fetch result - Error:", logoFetchError);
-                console.log("Logo setting fetch result - Data:", logoData);
+                // console.log("Logo setting fetch result - Error:", logoFetchError);
+                // console.log("Logo setting fetch result - Data:", logoData);
                 if (logoFetchError) {
-                    console.error('Error fetching logo URL setting:', logoFetchError.message);
+                    // console.error('Error fetching logo URL setting:', logoFetchError.message);
                     setLogoError("Could not fetch current logo setting.");
                 } else if (logoData && logoData.value) {
                     setCurrentLogoUrl(logoData.value);
@@ -115,10 +115,10 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
 
                 // Process Prompt Visibility Result <<<
                 const { data: promptSettingData, error: promptSettingFetchError } = promptSettingResult;
-                console.log("Prompt setting fetch result - Error:", promptSettingFetchError);
-                console.log("Prompt setting fetch result - Data:", promptSettingData);
+                // console.log("Prompt setting fetch result - Error:", promptSettingFetchError);
+                // console.log("Prompt setting fetch result - Data:", promptSettingData);
                 if (promptSettingFetchError) {
-                    console.error('Error fetching prompt visibility setting:', promptSettingFetchError.message);
+                    // console.error('Error fetching prompt visibility setting:', promptSettingFetchError.message);
                     // If the table/row doesn't exist yet, it might error. Handle this gracefully.
                     if (promptSettingFetchError.message.includes('Results contain 0 rows')) {
                         setPromptSettingError("Prompt setting not found in DB. Using default (Show). You might need to run the initial INSERT SQL.");
@@ -135,7 +135,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 // ----------------------------------------
 
             } catch (err) {
-                console.error("Error fetching admin data:", err);
+                // console.error("Error fetching admin data:", err);
                 const message = err instanceof Error ? err.message : "An unknown error occurred";
                 // Set a general error or specific ones depending on what failed
                 setError(`Error loading admin data: ${message}`);
@@ -165,13 +165,13 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
 
     // Handle saving a specific template
     const handleSaveTemplate = async (templateId: string) => {
-        console.log(`Attempting to save template: ${templateId}`);
+        // console.log(`Attempting to save template: ${templateId}`);
         const templateToSave = templates.find(t => t.template_id === templateId);
         if (!templateToSave) {
-            console.error(`Template with ID ${templateId} not found in state.`);
+            // console.error(`Template with ID ${templateId} not found in state.`);
             return;
         }
-        console.log("Template data to save:", templateToSave);
+        // console.log("Template data to save:", templateToSave);
 
         setSaveStatus(prevStatus => ({ ...prevStatus, [templateId]: 'Saving...' }));
         setError(null);
@@ -179,7 +179,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
         try {
             // --- Get token and create temporary client --- 
             const accessToken = await getToken({ template: 'supabase' });
-            console.log("Got Supabase token snippet:", accessToken ? accessToken.substring(0, 20) + '...' : 'null'); 
+            // console.log("Got Supabase token snippet:", accessToken ? accessToken.substring(0, 20) + '...' : 'null'); 
             if (!accessToken) {
                 throw new Error('Could not get Supabase token from Clerk for template save.');
             }
@@ -198,7 +198,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
             });
             // ---------------------------------------------
 
-            console.log("Calling supabase.update for:", templateId, "(WITH .select(), using TEMP client)"); // <<< Modified Log
+            // console.log("Calling supabase.update for:", templateId, "(WITH .select(), using TEMP client)"); // <<< Modified Log
             // *** Use the temporary client ***
             const { error: updateError, data: updateData } = await temporaryAuthenticatedSupabase
                 .from('prompt_templates')
@@ -210,11 +210,11 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 .select();
             // *** End Modification ***
 
-            console.log("Supabase update result (with .select()) - Error:", updateError);
-            console.log("Supabase update result (with .select()) - Data:", updateData);
+            // console.log("Supabase update result (with .select()) - Error:", updateError);
+            // console.log("Supabase update result (with .select()) - Data:", updateData);
 
             if (updateError) {
-                console.error("Throwing update error:", updateError);
+                // console.error("Throwing update error:", updateError);
                 throw updateError;
             }
 
@@ -227,7 +227,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                  );
                  setSaveStatus(prevStatus => ({ ...prevStatus, [templateId]: 'Saved!' })); 
             } else {
-                console.error(`Update for ${templateId} returned no data. RLS likely blocked based on JWT.`);
+                // console.error(`Update for ${templateId} returned no data. RLS likely blocked based on JWT.`);
                 setError(`Failed to save ${templateId}. RLS check failed with provided token.`);
                 setSaveStatus(prevStatus => ({ ...prevStatus, [templateId]: 'Error (RLS?)' }));
             }
@@ -237,7 +237,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
             }, 3000);
 
         } catch (err) {
-            console.error(`Error updating template ${templateId}:`, err);
+            // console.error(`Error updating template ${templateId}:`, err);
             setError(`Failed to save ${templateId} template. Error: ${err instanceof Error ? err.message : String(err)}`);
             setSaveStatus(prevStatus => ({ ...prevStatus, [templateId]: 'Error!' }));
         }
@@ -270,7 +270,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
             }
             e.target.value = ""; 
         } catch (error) {
-            console.error("AdminSettings: Error inside handleLogoFileChange:", error);
+            // console.error("AdminSettings: Error inside handleLogoFileChange:", error);
         }
     };
     // -----------------------------------
@@ -316,7 +316,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 });
 
             if (uploadError) {
-                console.error("Supabase Upload Error Details:", uploadError);
+                // console.error("Supabase Upload Error Details:", uploadError);
                 throw new Error(`Storage upload error: ${uploadError.message}`);
             }
 
@@ -338,7 +338,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
                 .select();
 
             if (upsertError) {
-                 console.error("Supabase Settings Upsert Error Details:", upsertError);
+                 // console.error("Supabase Settings Upsert Error Details:", upsertError);
                  throw new Error(`Settings save error: ${upsertError.message}`);
             }
 
@@ -357,7 +357,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
             setTimeout(() => setLogoSaveStatus(''), 3000);
 
         } catch (err) {
-            console.error(`Error processing logo:`, err);
+            // console.error(`Error processing logo:`, err);
             const message = err instanceof Error ? err.message : "An unknown error occurred";
             if (message.includes('security policy') || message.includes('permission')) {
                  setLogoError("Failed to save logo: Check admin permissions/RLS on storage bucket or settings table.");
@@ -405,7 +405,7 @@ const AdminSettings: React.FC<AdminSettingsProps> = ({ onLogoUpdate }) => {
             setTimeout(() => setPromptSettingSaveStatus(''), 3000);
 
         } catch (err) {
-            console.error(`Error updating prompt visibility setting:`, err);
+            // console.error(`Error updating prompt visibility setting:`, err);
             // Revert optimistic update on error
             setShowPromptsGlobally(!isChecked);
             const message = err instanceof Error ? err.message : String(err);

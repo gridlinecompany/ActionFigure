@@ -59,7 +59,7 @@ const ActionFigureGenerator: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (!session) {
-                console.log("ActionFigureGenerator: No session, cannot fetch data.");
+                // console.log("ActionFigureGenerator: No session, cannot fetch data.");
                 setPromptTemplate("Login required to load template.");
                 setLoadingSetting(false); // Mark setting as loaded (even though failed due to no session)
                 setShouldShowPrompt(true); // Default to true
@@ -116,17 +116,17 @@ const ActionFigureGenerator: React.FC = () => {
                 // Process Setting Result
                 const { data: settingData, error: settingError } = settingResult;
                 if (settingError) {
-                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
+                     // console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
                      setShouldShowPrompt(true);
                 } else if (settingData) {
                     setShouldShowPrompt(settingData.show_prompts_globally);
                 } else {
-                    console.warn("Prompt visibility setting not found. Defaulting to show.");
+                    // console.warn("Prompt visibility setting not found. Defaulting to show.");
                     setShouldShowPrompt(true);
                 }
 
             } catch (error) {
-                console.error("Error fetching action figure template or setting:", error);
+                // console.error("Error fetching action figure template or setting:", error);
                 setError(error instanceof Error ? error.message : String(error));
                 setPromptTemplate("Error loading template.");
                 // Ensure boolean is set
@@ -229,7 +229,7 @@ const ActionFigureGenerator: React.FC = () => {
 
         // Simple fallback if template hasn't loaded (unlikely but safe)
         if (finalPrompt.startsWith("Loading") || finalPrompt.startsWith("Could not") || finalPrompt.startsWith("Error") || finalPrompt.startsWith("Login")) {
-             console.warn("Constructing prompt with default structure because template was not loaded.");
+             // console.warn("Constructing prompt with default structure because template was not loaded.");
              // Fallback to a generic structure using current values
              return `Create a hyper-realistic 3D action figure of a ${profession} named ${name}, with accessories like ${accessories}, background ${background}, and outfit ${clothing} in premium blister packaging.`;
         }
@@ -260,7 +260,7 @@ const ActionFigureGenerator: React.FC = () => {
             finalPrompt = "Slightly refine the base image quality. Make no other changes."; // Fallback prompt
         }
         
-        console.log("Constructed Edit Prompt (Simplified):", finalPrompt);
+        // console.log("Constructed Edit Prompt (Simplified):", finalPrompt);
         return finalPrompt;
     }
 
@@ -328,7 +328,7 @@ const ActionFigureGenerator: React.FC = () => {
         try {
             // Upload Face Reference
             if (faceRefImage) {
-                console.log("Uploading face reference image to temp bucket...");
+                // console.log("Uploading face reference image to temp bucket...");
                 const filePath = `public/${session?.user.id}/${timestamp}_face_ref.png`; // Use user ID from session
                 const { data: uploadData, error } = await supabaseUserClient.storage
                     .from('temp-images') // <-- Use temp-images bucket
@@ -342,12 +342,12 @@ const ActionFigureGenerator: React.FC = () => {
                     .getPublicUrl(filePath);
                 if (!urlData?.publicUrl) throw new Error('Failed to get public URL for face reference.');
                 faceRefUrl = urlData.publicUrl;
-                console.log("Face reference uploaded:", faceRefUrl);
+                // console.log("Face reference uploaded:", faceRefUrl);
             }
 
             // Upload Body Reference
             if (bodyRefImage) {
-                 console.log("Uploading body reference image to temp bucket...");
+                 // console.log("Uploading body reference image to temp bucket...");
                  const filePath = `public/${session?.user.id}/${timestamp}_body_ref.png`;
                  const { data: uploadData, error } = await supabaseUserClient.storage
                     .from('temp-images') // <-- Use temp-images bucket
@@ -361,12 +361,12 @@ const ActionFigureGenerator: React.FC = () => {
                     .getPublicUrl(filePath);
                  if (!urlData?.publicUrl) throw new Error('Failed to get public URL for body reference.');
                  bodyRefUrl = urlData.publicUrl;
-                 console.log("Body reference uploaded:", bodyRefUrl);
+                 // console.log("Body reference uploaded:", bodyRefUrl);
             }
 
         } catch (err) {
              uploadError = err instanceof Error ? err.message : String(err);
-             console.error('Error uploading reference image(s):', err);
+             // console.error('Error uploading reference image(s):', err);
              setError(`Failed to upload reference image: ${uploadError}`);
              setStatus('error');
              return; // Stop if reference upload fails
@@ -381,7 +381,7 @@ const ActionFigureGenerator: React.FC = () => {
         try {
             // Token already obtained above
             // --- Step 1: Call generate-image --- 
-            console.log("Step 1: Calling generate-image...");
+            // console.log("Step 1: Calling generate-image...");
             const basePrompt = constructBasePrompt(); // Construct base prompt here
             const generateFormData = new FormData();
             generateFormData.append('prompt', basePrompt);
@@ -407,7 +407,7 @@ const ActionFigureGenerator: React.FC = () => {
                 throw new Error(generateResult.error || 'Base generation failed: No image URL received.');
             }
 
-            console.log("Step 1 Success: Base image URL:", generateResult.imageUrl);
+            // console.log("Step 1 Success: Base image URL:", generateResult.imageUrl);
             const currentBaseImageUrl = generateResult.imageUrl; // Store temporarily
             setBaseImageUrl(currentBaseImageUrl); // Update state for potential display
 
@@ -416,7 +416,7 @@ const ActionFigureGenerator: React.FC = () => {
                 setStatus('editingImage'); // START Step 2
                 // Pass URLs to constructEditPrompt
                 const editPrompt = constructEditPrompt(faceRefUrl, bodyRefUrl);
-                console.log("Step 2: Calling edit-image...");
+                // console.log("Step 2: Calling edit-image...");
 
                 // Fetch base image blob
                 let baseImageBlob: Blob;
@@ -457,20 +457,20 @@ const ActionFigureGenerator: React.FC = () => {
                     throw new Error(editResult.error || 'Image editing failed: No final image URL received.');
                 }
 
-                console.log("Step 2 Success: Final image URL:", editResult.imageUrl);
+                // console.log("Step 2 Success: Final image URL:", editResult.imageUrl);
                 setResultImage(editResult.imageUrl); // Set FINAL image URL
                 setStatus('success'); // END Step 2 (Success)
 
             } else {
                 // No reference images - use the base image as the final result
-                console.log("Step 2: Skipped edit step (no reference images). Using base image.");
+                // console.log("Step 2: Skipped edit step (no reference images). Using base image.");
                 setResultImage(currentBaseImageUrl); // Use base as final
                 setStatus('success'); // END (Success without edit)
             }
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            console.error('Error during generation/edit process:', err);
+            // console.error('Error during generation/edit process:', err);
             setError(`Process failed: ${errorMessage}`);
             setStatus('error'); // Set status to error
         }

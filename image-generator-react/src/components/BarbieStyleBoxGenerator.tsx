@@ -101,7 +101,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
                 if (templateError) throw new Error(`Template fetch failed: ${templateError.message}`);
                 if (templateData && templateData.template_text) {
                     setPromptTemplate(templateData.template_text);
-                    console.log("Prompt template loaded.");
                 } else {
                     setPromptTemplate("Could not load template.");
                 }
@@ -110,19 +109,15 @@ const BarbieStyleBoxGenerator: React.FC = () => {
                 const { data: settingData, error: settingError } = settingResult;
                 if (settingError) {
                      // Log error, but default to showing the prompt if setting fetch fails
-                     console.error(`Error fetching prompt visibility setting: ${settingError.message}. Defaulting to show.`);
                      setShouldShowPrompt(true);
                 } else if (settingData) {
                     setShouldShowPrompt(settingData.show_prompts_globally);
-                    console.log(`Prompt visibility setting loaded: ${settingData.show_prompts_globally}`);
                 } else {
-                    console.warn("Prompt visibility setting not found. Defaulting to show.");
                     setShouldShowPrompt(true); // Default to show if row/value doesn't exist
                 }
 
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
-                console.error("Error fetching template or setting:", err);
                 // Set specific errors or a general one
                 setPromptTemplate(`Error loading template/setting: ${message}`);
                 // Ensure boolean is set for setShouldShowPrompt
@@ -203,7 +198,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
         // Optional: Add specific details from formData if needed for edits?
         // editInstructions += ` Ensure the outfit is ${formData.figureOutfit}.`;
 
-        console.log("Constructed Edit Prompt:", editInstructions);
         return editInstructions;
     };
 
@@ -240,7 +234,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
 
         // === Step 1: Call generate-image Function ===
         try {
-            console.log("Step 1: Calling generate-image...");
             const generateFormData = new FormData();
             generateFormData.append('prompt', basePrompt);
             generateFormData.append('size', size);
@@ -265,26 +258,20 @@ const BarbieStyleBoxGenerator: React.FC = () => {
                 throw new Error(generateResult.error || 'Base generation failed: No image URL received.');
             }
 
-            console.log("Step 1 Success: Base image URL:", generateResult.imageUrl);
-
             // === Step 2: Check if edits are needed and Call edit-image Function ===
             if (faceReferenceImage || bodyReferenceImage) { 
                  setStatus('editingImage');
                  const editPrompt = constructEditPrompt();
-                 console.log("Step 2: Calling edit-image with FormData");
 
                  // Fetch base image blob
                  let baseImageBlob: Blob;
                  try {
-                    console.log(`Fetching base image data from: ${generateResult.imageUrl}`);
                     const response = await fetch(generateResult.imageUrl);
                     if (!response.ok) {
                         throw new Error(`Failed to fetch base image for editing: Status ${response.status}`);
                     }
                     baseImageBlob = await response.blob();
-                    console.log(`Fetched base image blob, size: ${baseImageBlob.size}, type: ${baseImageBlob.type}`);
                  } catch (fetchErr) {
-                     console.error("Error fetching base image blob:", fetchErr);
                      // Type assertion for error message extraction
                      const errorMessage = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
                      throw new Error(`Failed to fetch base image for edit step: ${errorMessage}`);
@@ -319,20 +306,17 @@ const BarbieStyleBoxGenerator: React.FC = () => {
                      throw new Error(editResult.error || 'Image editing failed: No final image URL received.');
                  }
 
-                 console.log("Step 2 Success: Final image URL:", editResult.imageUrl);
                  setResultImage(editResult.imageUrl); 
                  setStatus('success');
 
             } else {
                 // No reference images - use the base image as the final result
-                console.log("Step 2: Skipped edit step (no reference images). Using base image.");
                 setResultImage(generateResult.imageUrl);
                 setStatus('success');
             }
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            console.error('Error during generation/edit process:', err);
             setError(`Process failed: ${errorMessage}`);
             setStatus('error');
         }
@@ -366,7 +350,6 @@ const BarbieStyleBoxGenerator: React.FC = () => {
             case 'accessories': return formData.figureAccessories;
             default:
                 // Keep the warning but don't log excessively during normal operation
-                // console.warn(`Unhandled placeholder in getFormDataValue: ${placeholder}`); 
                 return '';
         }
     }

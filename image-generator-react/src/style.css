@@ -179,6 +179,15 @@ h1 {
     background: #555;
 }
 
+/* Make file name span wrap */
+.file-name {
+    display: inline-block; /* Allows wrapping */
+    margin-left: 10px;
+    font-size: 0.9em;
+    color: #bdbdbd;
+    word-break: break-all; /* Break long file names */
+}
+
 /* Added styles for checkbox group */
 .checkbox-group {
     display: flex;
@@ -633,8 +642,118 @@ button#generate-btn:disabled {
 }
 
 .main-content {
-  flex-grow: 1; /* Allow main content to take remaining space */
-  width: 0; /* Add width: 0 to ensure flex-grow works correctly */
-  padding: 30px; /* Add padding around the main content area */
-  overflow-y: auto; /* Allow scrolling if content exceeds viewport */
+  flex-grow: 1;
+  padding: 20px; /* Add padding for content area */
+  overflow-y: auto; /* Allow scrolling if content overflows */
+}
+
+/* --- Responsive Design --- */
+
+/* Adjustments for medium screens and smaller (e.g., tablets) */
+@media (max-width: 992px) {
+    .generator-layout {
+        /* Allow slightly more flexibility */
+        gap: 20px;
+    }
+
+    .generator-layout form,
+    .generator-layout .result-container {
+        max-width: 50%; /* Allow equal split */
+    }
+
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Smaller min size */
+    }
+}
+
+/* Adjustments for small screens (e.g., mobile phones) */
+@media (max-width: 768px) {
+    body {
+        /* Remove potential horizontal scroll issues */
+        overflow-x: hidden;
+    }
+
+    .app-layout {
+        flex-direction: column; /* Stack header/sidebar above content */
+        height: auto; /* Allow height to adjust to content */
+    }
+
+    .app-sidebar {
+        width: 100%;
+        height: auto; /* Adjust height */
+        /* Consider adding overflow-y: auto if nav links get too long */
+        border-right: none;
+        border-bottom: 1px solid #333;
+        position: static; /* Remove fixed positioning */
+        padding: 10px; /* Reduce padding */
+    }
+
+    .sidebar-nav {
+        flex-direction: row; /* Make nav horizontal */
+        flex-wrap: wrap; /* Allow wrapping */
+        justify-content: center; /* Center links */
+        gap: 10px; /* Space between links */
+    }
+
+    .sidebar-link {
+        padding: 8px 12px; /* Adjust padding */
+    }
+
+    .header {
+        /* Header might need adjustments depending on its content */
+        padding: 10px;
+        flex-direction: column; /* Stack items in header */
+        align-items: flex-start;
+    }
+
+    .header .user-info {
+        margin-top: 10px; /* Add space below logo/nav */
+    }
+
+    .main-content {
+        padding: 15px; /* Reduce padding */
+    }
+
+    .generator-layout {
+        flex-direction: column; /* Stack form and results */
+        gap: 25px;
+    }
+
+    .generator-layout form,
+    .generator-layout .result-container {
+        max-width: 100%; /* Take full width when stacked */
+        padding-left: 0;
+        border-left: none;
+        min-height: auto; /* Remove fixed min-height */
+    }
+
+    .admin-settings-container {
+        /* Stack sections if needed, depends on complexity */
+        /* Example: */
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .admin-section {
+        padding: 15px;
+    }
+
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Even smaller items */
+    }
+
+    /* Ensure inputs/buttons are easily tappable */
+    .input-group input[type="text"],
+    .input-group select,
+    .input-group textarea {
+        padding: 12px; /* Slightly larger padding */
+        font-size: 1rem; /* Ensure readable font size */
+    }
+
+    button#generate-btn,
+    .clerk-button {
+        padding: 14px 20px; /* Larger tap target */
+        font-size: 1rem;
+    }
 } 

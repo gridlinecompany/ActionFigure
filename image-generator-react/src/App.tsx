@@ -46,7 +46,6 @@ function App() {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
         if (!supabaseUrl || !supabaseAnonKey) {
-            console.error("Supabase URL/Key missing for public client.");
             return; // Can't create client
         }
         const publicSupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
@@ -60,17 +59,14 @@ function App() {
           .maybeSingle(); // Use maybeSingle in case the setting doesn't exist
 
         if (error) {
-          console.error('Error fetching logo URL:', error.message);
-          return;
+            return;
         }
 
         if (data && data.value) {
           setLogoUrl(data.value);
         } else {
-          console.log('No logo URL found in settings.');
         }
       } catch (err) {
-        console.error('Unexpected error fetching logo URL:', err);
       }
     };
 
@@ -79,14 +75,12 @@ function App() {
 
   // --- Callback function to update logoUrl state --- 
   const handleLogoUpdate = (newUrl: string | null) => {
-    console.log("App.tsx: handleLogoUpdate called with:", newUrl);
     setLogoUrl(newUrl);
   };
   // ------------------------------------------------
 
   // Wait for Clerk to load user data before rendering routes
   if (!isLoaded) {
-    // console.log("App Render - Clerk not loaded yet"); // Can remove this now
     return <div className="container">Loading...</div>; 
   }
 

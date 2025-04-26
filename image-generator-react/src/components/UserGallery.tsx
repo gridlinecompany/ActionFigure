@@ -59,7 +59,7 @@ const UserGallery: React.FC = () => {
         const bucketName = 'generated-images';
         const userFolderPath = `public/${userId}/`; // Path uses Clerk user ID
 
-        console.log(`Listing images from bucket: ${bucketName}, path: ${userFolderPath}`);
+        // console.log(`Listing images from bucket: ${bucketName}, path: ${userFolderPath}`);
 
         const { data: fileList, error: listError } = await supabaseClerkClient.storage
           .from(bucketName)
@@ -70,7 +70,7 @@ const UserGallery: React.FC = () => {
           });
 
         if (listError) {
-          console.error("Supabase storage list error:", listError);
+          // console.error("Supabase storage list error:", listError);
           // Check for specific RLS error signature if needed
           if (listError.message.includes('permission denied') || listError.message.includes('security policy') || listError.message.includes('syntax error')) {
             throw new Error(`Storage Error: Could not list images. Check RLS policy for generated-images bucket and path '${userFolderPath}'. Policy might be incorrect or function failed.`);
@@ -80,12 +80,12 @@ const UserGallery: React.FC = () => {
         }
 
         if (!fileList || fileList.length === 0) {
-          console.log("No images found in user folder.");
+          // console.log("No images found in user folder.");
           setImages([]);
           setLoading(false);
           return;
         }
-        console.log(`Found ${fileList.length} images.`);
+        // console.log(`Found ${fileList.length} images.`);
 
         // Generate public URLs (consider batching if many images)
         const imageUrls = fileList.map(file => {
@@ -99,7 +99,7 @@ const UserGallery: React.FC = () => {
 
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An unknown error occurred';
-        console.error("Error fetching gallery images:", err);
+        // console.error("Error fetching gallery images:", err);
         setError(message);
       } finally {
         setLoading(false);
